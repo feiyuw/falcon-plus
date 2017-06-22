@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/toolkits/nux"
+	"github.com/feiyuw/nux"
 	"net/http"
 )
 
