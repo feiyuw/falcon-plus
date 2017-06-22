@@ -2,7 +2,7 @@ package http
 
 import (
 	"fmt"
-	"github.com/toolkits/nux"
+	"github.com/feiyuw/nux"
 	"net/http"
 	"runtime"
 	"time"

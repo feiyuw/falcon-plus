@@ -2,8 +2,8 @@ package http
 
 import (
 	"fmt"
+	"github.com/feiyuw/nux"
 	"github.com/open-falcon/falcon-plus/modules/agent/funcs"
-	"github.com/toolkits/nux"
 	"net/http"
 	"runtime"
 )
