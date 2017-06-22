@@ -4,8 +4,8 @@ import:
 - package: github.com/open-falcon/rrdlite
   version: b82d08f8da852b242ac87cd22f1cd01d33337d5d
 
-- package: github.com/toolkits/nux
-  version: 40e948efd15371c0381842833894bc71dea076e4
+- package: github.com/feiyuw/nux
+  version: 5deb9ec67da9d79b653d9bb2bc4c4856c9caa7c9
 
 - package: github.com/Sirupsen/logrus
   version: 61e43dc76f7ee59a82bdf3d71033dc12bea4c77d
