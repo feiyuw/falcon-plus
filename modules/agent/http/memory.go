@@ -13,7 +13,12 @@ func configMemoryRoutes() {
 			return
 		}
 
-		memFree := mem.MemFree + mem.Buffers + mem.Cached
+		var memFree uint64
+		if mem.MemAvailable == 0 {
+			memFree = mem.MemFree + mem.Buffers + mem.Cached
+		} else {
+			memFree = mem.MemAvailable
+		}
 		memUsed := mem.MemTotal - memFree
 		var t uint64 = 1024 * 1024
 		RenderDataJson(w, []interface{}{mem.MemTotal / t, memUsed / t, memFree / t})
@@ -26,7 +31,12 @@ func configMemoryRoutes() {
 			return
 		}
 
-		memFree := mem.MemFree + mem.Buffers + mem.Cached
+		var memFree uint64
+		if mem.MemAvailable == 0 {
+			memFree = mem.MemFree + mem.Buffers + mem.Cached
+		} else {
+			memFree = mem.MemAvailable
+		}
 		memUsed := mem.MemTotal - memFree
 
 		RenderDataJson(w, map[string]interface{}{
