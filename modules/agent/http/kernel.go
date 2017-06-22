@@ -1,8 +1,8 @@
 package http
 
 import (
+	"github.com/feiyuw/nux"
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
-	"github.com/toolkits/nux"
 	"github.com/toolkits/sys"
 	"net/http"
 )
