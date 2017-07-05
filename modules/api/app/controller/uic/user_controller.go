@@ -13,6 +13,7 @@ import (
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	"github.com/open-falcon/falcon-plus/modules/api/app/model/uic"
 	"github.com/open-falcon/falcon-plus/modules/api/app/utils"
+	"github.com/spf13/viper"
 )
 
 type APIUserInput struct {
@@ -28,6 +29,8 @@ type APIUserInput struct {
 func CreateUser(c *gin.Context) {
 	var inputs APIUserInput
 	err := c.Bind(&inputs)
+	signupDisable := viper.GetBool("signup_disable")
+
 	switch {
 	case err != nil:
 		h.JSONR(c, http.StatusBadRequest, err)
@@ -35,6 +38,22 @@ func CreateUser(c *gin.Context) {
 	case utils.HasDangerousCharacters(inputs.Cnname):
 		h.JSONR(c, http.StatusBadRequest, "name pattern is invalid")
 		return
+	//when sign is disabled, only admin user can create user
+	case signupDisable:
+		user, err := h.GetUser(c)
+		errorMsgs := []string{"sign up is not enabled, please contact administrator"}
+		if err != nil {
+			if !strings.Contains(err.Error(), "token key is not set") {
+				errorMsgs = append(errorMsgs, err.Error())
+			}
+			h.JSONR(c, badstatus, strings.Join(errorMsgs, ". "))
+			return
+		} else if !user.IsAdmin() {
+			errorMsgs = append(errorMsgs, "You are not admin, no permissions can do this")
+			h.JSONR(c, badstatus, strings.Join(errorMsgs, ". "))
+			return
+		}
+		//if current user is admin will passed this and continue to next part
 	}
 	var user uic.User
 	db.Uic.Table("user").Where("name = ?", inputs.Name).Scan(&user)
@@ -103,7 +122,11 @@ func UpdateCurrentUser(c *gin.Context) {
 		h.JSONR(c, http.StatusBadRequest, "name pattern is invalid")
 		return
 	}
-	websession, _ := h.GetSession(c)
+	websession, err := h.GetSession(c)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
 	user := uic.User{}
 	db.Uic.Table("user").Where("name = ?", websession.Name).Scan(&user)
 	if user.ID == 0 {
@@ -138,7 +161,12 @@ func ChangePassword(c *gin.Context) {
 	if err != nil {
 		h.JSONR(c, http.StatusBadRequest, err)
 	}
-	websession, _ := h.GetSession(c)
+	websession, err := h.GetSession(c)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+
 	user := uic.User{Name: websession.Name}
 
 	dt := db.Uic.Where(&user).Find(&user)
@@ -171,7 +199,7 @@ func UserInfo(c *gin.Context) {
 	return
 }
 
-// anyone should get the user infomation
+// anyone should get the user information
 func GetUser(c *gin.Context) {
 	uidtmp := c.Params.ByName("uid")
 	if uidtmp == "" {
@@ -321,9 +349,12 @@ func AdminUserDelete(c *gin.Context) {
 		h.JSONR(c, http.StatusBadRequest, "you don't have permission!")
 		return
 	}
-	dt := db.Uic.Delete(&uic.User{}, inputs.UserID)
+	dt := db.Uic.Where("id = ? and role <= ?", inputs.UserID, cuser.Role).Delete(&uic.User{})
 	if dt.Error != nil {
 		h.JSONR(c, http.StatusExpectationFailed, dt.Error)
+		return
+	} else if dt.RowsAffected == 0 {
+		h.JSONR(c, http.StatusExpectationFailed, "you have no such permission or sth goes wrong")
 		return
 	}
 	h.JSONR(c, fmt.Sprintf("user %v has been delete, affect row: %v", inputs.UserID, dt.RowsAffected))

@@ -12,7 +12,7 @@
 # Documentations
 
 - [Usage](http://book.open-falcon.org)
-- [Open-Faclon API](http://open-falcon.org/falcon-plus)
+- [Open-Falcon API](http://open-falcon.org/falcon-plus)
 
 # Prerequisite
 
@@ -21,6 +21,11 @@
 
 # Getting Started
 
+## Docker
+
+Please refer to ./docker/[README.md](https://github.com/open-falcon/falcon-plus/blob/master/docker/README.md).
+
+## Build from source
 **before start, please make sure you prepared this:**
 
 ```
@@ -54,7 +59,7 @@ mysql -h 127.0.0.1 -u root -p < dashboard-db-schema.sql
 mysql -h 127.0.0.1 -u root -p < alarms-db-schema.sql
 ```
 
-**NOTE: if you are upgrading from v0.1 to current version v0.2.0,then**
+**NOTE: if you are upgrading from v0.1 to current version v0.2.0,then**. [More upgrading instruction](http://www.jianshu.com/p/6fb2c2b4d030)
 
     mysql -h 127.0.0.1 -u root -p < alarms-db-schema.sql
 
@@ -75,7 +80,6 @@ make pack
 
 * *after `make pack` you will got `open-falcon-vx.x.x.tar.gz`*
 * *if you want to edit configure file for each module, you can edit `config/xxx.json` before you do `make pack`*
-* if you got dependencies fetch error on `golang.org/x/*`, please run `sh fix_gosrouce_fetch_error.sh` before you compile it.
 
 #  Unpack and Decompose
 
@@ -119,30 +123,18 @@ for example:
 
 * For debugging , You can check `$WorkDir/$moduleName/log/logs/xxx.log`
 
-# Install Front-end Dashboard
+# Install Frontend Dashboard
 - Follow [this](https://github.com/open-falcon/dashboard).
 
 **NOTE: if you want to use grafana as the dashboard, please check [this](https://github.com/open-falcon/grafana-openfalcon-datasource).**
 
 # Package Management
-## How-to
 
-Make sure you're using Go 1.5+ and **GO15VENDOREXPERIMENT=1** env var is exported. (You can ignore GO15VENDOREXPERIMENT using Go 1.6+.)
+We use govendor to manage the golang packages. Please install `govendor` before compilation.
 
- 0. Install `trash` by `go get github.com/rancher/trash`.
- 1. Edit `trash.yml` file to your needs. See the example as follow.
- 2. Run `trash --keep` to download the dependencies.
+    go get -u github.com/kardianos/govendor
 
-trash file example:
-
-```
-package: github.com/open-falcon/falcon-plus
-
-import:
-- package: github.com/open-falcon/common              # package name
-  version: origin/develop                        # tag, commit, or branch
-  repo:    https://github.com/open-falcon/common.git  # (optional) git URL
-```
+Most depended packages are saved under `./vendor` dir. If you want to add or update a package, just run `govendor fetch xxxx@commitID` or `govendor fetch xxxx@v1.x.x`, then you will find the package have been placed in `./vendor` correctly.
 
 # Package Release
 

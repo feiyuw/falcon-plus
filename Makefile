@@ -1,34 +1,59 @@
-SHELL := /bin/bash
-TARGET_SOURCE = $(shell find main.go g cmd common -name '*.go')
 CMD = agent aggregator graph hbs judge nodata transfer gateway api alarm
 TARGET = open-falcon
-GOFILES := find . -name "*.go" -type f -not -path "./vendor/*"
+PACKAGES ?= $(shell go list ./... | grep -v /vendor/)
+GOFILES := $(shell find . -name "*.go" -type f -not -path "./vendor/*")
 GOFMT ?= gofmt "-s"
-
 VERSION := $(shell cat VERSION)
 
-all: trash $(CMD) $(TARGET)
+all: $(CMD) $(TARGET)
+
+.PHONY: misspell-check
+misspell-check:
+	@hash misspell > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/client9/misspell/cmd/misspell; \
+	fi
+	misspell -error $(GOFILES)
+
+.PHONY: misspell
+misspell:
+	@hash misspell > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/client9/misspell/cmd/misspell; \
+	fi
+	misspell -w $(GOFILES)
+
+install:
+	@hash govendor > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		go get -u github.com/kardianos/govendor; \
+	fi
+	@if [ -f ~/.bash_profile ]; then source ~/.bash_profile; fi
+	govendor sync
+
+vet:
+	go vet $(PACKAGES)
 
 fmt:
-	$(GOFILES) | xargs $(GOFMT) -w
+	$(GOFMT) -w $(GOFILES)
 
 .PHONY: fmt-check
 fmt-check:
-	@# get all go files and run go fmt on them
-	@files=$$($(GOFILES) | xargs $(GOFMT) -l); if [ -n "$$files" ]; then \
+	# get all go files and run go fmt on them
+	@diff=$$($(GOFMT) -d $(GOFILES)); \
+	if [ -n "$$diff" ]; then \
 		echo "Please run 'make fmt' and commit the result:"; \
-		echo "$${files}"; \
+		echo "$${diff}"; \
 		exit 1; \
-		fi;
+	fi;
 
 $(CMD):
 	go get ./modules/$@
 	go build -o bin/$@/falcon-$@ ./modules/$@
 
-$(TARGET): $(TARGET_SOURCE)
+.PHONY: $(TARGET)
+$(TARGET): $(GOFILES)
 	go build -ldflags "-X main.GitCommit=`git rev-parse --short HEAD` -X main.Version=$(VERSION)" -o open-falcon
 
 checkbin: bin/ config/ open-falcon
+
 pack: checkbin
 	@if [ -e out ] ; then rm -rf out; fi
 	@mkdir out
@@ -52,12 +77,6 @@ clean:
 	@rm -rf ./bin
 	@rm -rf ./out
 	@rm -rf ./$(TARGET)
-	@rm -rf ./package_cache_tmp
-	@rm -rf ./vendor
 	@rm -rf open-falcon-v$(VERSION).tar.gz
 
-trash:
-	go get -u github.com/rancher/trash
-	trash -k -cache package_cache_tmp
-
-.PHONY: trash clean all agent aggregator graph hbs judge nodata transfer gateway api alarm
+.PHONY: clean all agent aggregator graph hbs judge nodata transfer gateway api alarm

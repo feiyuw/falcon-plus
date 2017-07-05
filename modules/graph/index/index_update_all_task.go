@@ -38,7 +38,7 @@ func UpdateIndexAllByDefaultStep() {
 func UpdateIndexAll(updateStepInSec int64) {
 	// 减少任务积压,但高并发时可能无效(AvailablePermits不是线程安全的)
 	if semaIndexUpdateAllTask.AvailablePermits() <= 0 {
-		log.Println("updateIndexAll, concurrent not avaiable")
+		log.Println("updateIndexAll, concurrent not available")
 		return
 	}
 
@@ -72,7 +72,7 @@ func UpdateIndexOne(endpoint string, metric string, tags map[string]string, dsty
 	md5 := itemDemo.Checksum()
 	uuid := itemDemo.UUID()
 
-	cached := indexedItemCache.Get(md5)
+	cached := IndexedItemCache.Get(md5)
 	if cached == nil {
 		return fmt.Errorf("not found")
 	}
@@ -94,7 +94,7 @@ func UpdateIndexOne(endpoint string, metric string, tags map[string]string, dsty
 
 func updateIndexAll(updateStepInSec int64) int {
 	var ret int = 0
-	if indexedItemCache == nil || indexedItemCache.Size() <= 0 {
+	if IndexedItemCache == nil || IndexedItemCache.Size() <= 0 {
 		return ret
 	}
 
@@ -108,16 +108,16 @@ func updateIndexAll(updateStepInSec int64) int {
 	ts := time.Now().Unix()
 	lastTs := ts - updateStepInSec
 
-	keys := indexedItemCache.Keys()
+	keys := IndexedItemCache.Keys()
 	for _, key := range keys {
-		icitem := indexedItemCache.Get(key)
+		icitem := IndexedItemCache.Get(key)
 		if icitem == nil {
 			continue
 		}
 
 		gitem := icitem.(*IndexCacheItem).Item
 		if gitem.Timestamp < lastTs { //缓存中的数据太旧了,不能用于索引的全量更新
-			indexedItemCache.Remove(key) //在这里做个删除,有点恶心
+			IndexedItemCache.Remove(key) //在这里做个删除,有点恶心
 			continue
 		}
 		// 并发写mysql

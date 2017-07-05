@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/open-falcon/falcon-plus/modules/graph/api"
+	"github.com/open-falcon/falcon-plus/modules/graph/cron"
 	"github.com/open-falcon/falcon-plus/modules/graph/g"
 	"github.com/open-falcon/falcon-plus/modules/graph/http"
 	"github.com/open-falcon/falcon-plus/modules/graph/index"
@@ -27,7 +28,7 @@ func start_signal(pid int, cfg *g.GlobalConfig) {
 
 		switch s {
 		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-			log.Println("gracefull shut down")
+			log.Println("graceful shut down")
 			if cfg.Http.Enabled {
 				http.Close_chan <- 1
 				<-http.Close_done_chan
@@ -85,6 +86,7 @@ func main() {
 	index.Start()
 	// start http server
 	go http.Start()
+	go cron.CleanCache()
 
 	start_signal(os.Getpid(), g.Config())
 }

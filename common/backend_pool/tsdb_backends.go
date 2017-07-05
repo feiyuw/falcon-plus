@@ -1,3 +1,17 @@
+// Copyright 2017 Xiaomi, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package backend_pool
 
 import (
@@ -14,18 +28,18 @@ type TsdbClient struct {
 	name string
 }
 
-func (this TsdbClient) Name() string {
-	return this.name
+func (t TsdbClient) Name() string {
+	return t.name
 }
 
-func (this TsdbClient) Closed() bool {
-	return this.cli == nil
+func (t TsdbClient) Closed() bool {
+	return t.cli == nil
 }
 
-func (this TsdbClient) Close() error {
-	if this.cli != nil {
-		err := this.cli.Close()
-		this.cli = nil
+func (t TsdbClient) Close() error {
+	if t.cli != nil {
+		err := t.cli.Close()
+		t.cli = nil
 		return err
 	}
 	return nil
@@ -71,10 +85,10 @@ func NewTsdbConnPoolHelper(address string, maxConns, maxIdle, connTimeout, callT
 	}
 }
 
-func (this *TsdbConnPoolHelper) Send(data []byte) (err error) {
-	conn, err := this.p.Fetch()
+func (t *TsdbConnPoolHelper) Send(data []byte) (err error) {
+	conn, err := t.p.Fetch()
 	if err != nil {
-		return fmt.Errorf("get connection fail: err %v. proc: %s", err, this.p.Proc())
+		return fmt.Errorf("get connection fail: err %v. proc: %s", err, t.p.Proc())
 	}
 
 	cli := conn.(TsdbClient).cli
@@ -86,24 +100,22 @@ func (this *TsdbConnPoolHelper) Send(data []byte) (err error) {
 	}()
 
 	select {
-	case <-time.After(time.Duration(this.callTimeout) * time.Millisecond):
-		this.p.ForceClose(conn)
-		return fmt.Errorf("%s, call timeout", this.address)
+	case <-time.After(time.Duration(t.callTimeout) * time.Millisecond):
+		t.p.ForceClose(conn)
+		return fmt.Errorf("%s, call timeout", t.address)
 	case err = <-done:
 		if err != nil {
-			this.p.ForceClose(conn)
-			err = fmt.Errorf("%s, call failed, err %v. proc: %s", this.address, err, this.p.Proc())
+			t.p.ForceClose(conn)
+			err = fmt.Errorf("%s, call failed, err %v. proc: %s", t.address, err, t.p.Proc())
 		} else {
-			this.p.Release(conn)
+			t.p.Release(conn)
 		}
 		return err
 	}
-
-	return
 }
 
-func (this *TsdbConnPoolHelper) Destroy() {
-	if this.p != nil {
-		this.p.Destroy()
+func (t *TsdbConnPoolHelper) Destroy() {
+	if t.p != nil {
+		t.p.Destroy()
 	}
 }

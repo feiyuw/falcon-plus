@@ -166,7 +166,7 @@ func DeleteHostGroup(c *gin.Context) {
 			h.JSONR(c, badstatus, dt.Error)
 			return
 		}
-		if hostgroup.CreateUser == user.Name {
+		if hostgroup.CreateUser != user.Name {
 			h.JSONR(c, badstatus, "You don't have permission!")
 			return
 		}
@@ -258,7 +258,7 @@ func BindTemplateToGroup(c *gin.Context) {
 		TplID: inputs.TplID,
 	}
 	db.Falcon.Where("grp_id = ? and tpl_id = ?", inputs.GrpID, inputs.TplID).Find(&grpTpl)
-	if grpTpl.BindUser == "" {
+	if grpTpl.BindUser != "" {
 		h.JSONR(c, badstatus, errors.New("this binding already existing, reject!"))
 		return
 	}
