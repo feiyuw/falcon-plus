@@ -160,6 +160,7 @@ CREATE TABLE `action` (
   `after_callback_sms`   TINYINT(4)       NOT NULL DEFAULT '0',
   `after_callback_mail`  TINYINT(4)       NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
+  UNIQUE KEY `uniq_uic` (`uic`)
 )
   ENGINE =InnoDB
   DEFAULT CHARSET =utf8
