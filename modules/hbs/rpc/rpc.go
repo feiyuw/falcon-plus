@@ -17,7 +17,6 @@ func Start() {
 	addr := g.Config().Listen
 
 	server := rpc.NewServer()
-	// server.Register(new(filter.Filter))
 	server.Register(new(Agent))
 	server.Register(new(Hbs))
 
